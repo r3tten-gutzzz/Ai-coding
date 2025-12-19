@@ -1,46 +1,30 @@
-import cv2
-import numpy as np
-from cvzone.HandTrackingModule import HandDetector
-import screen_brightness_control as sbc
+import requests
 
-cap = cv2.VideoCapture(0) 
-detector = HandDetector(maxHands=1, detectionCon=0.7)
+def get_random_joke():
+    url = "https://official-joke-api.appspot.com/random_joke"
+    response = requests.get(url)
 
-prev_y = None
-brightness = sbc.get_brightness()[0]
+    if response.status_code == 200:
 
-while True:
-    sucess, img = cap.read()
-    hands, img = detector.findHands(img)
+        joke_data = response.json()
+        return f"{joke_data['setup']} - {joke_data['punchline']}"
+    else:
+        return "Failed to retreive joke."
 
-    if hands:
-        hand = hands[0]
-        finger = hand["ImList"][8]
-        x , y , z = finger
+def main():
+    print("Welcome to random joke generator!")
 
-        if prev_y is not None:
-            diff = prev_y - y
-            
-            if diff > 20:
-                brightness = min(brightness + 5, 100)
-                sbc.set_brightness(brightness)
+    while True:
+        userInput = input("Do you want to get a new joke? Y/N: ").strip().lower()
+        
+        if userInput in ["no", "n"]:
+            print("Goodbye")
+            break
 
-            elif  diff < -20:
-                brightness = max(brightness - 5, 0)
-                sbc.set_brightness(brightness)
+        joke = get_random_joke()
+        print(joke)
 
-
-        prev_y = y 
-
-        cv2.putText(img, f"Brightness: {brightness}%", (30,50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,255), 2)
-    cv2.imshow("Brightness Control", img)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap.release()
-cv2.destroyAllWindows()
-
+if __name__== "__main__":
+    main()
 
 
