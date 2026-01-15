@@ -1,44 +1,74 @@
-import cv2
-import numpy as np
+import requests
+from PIL import Image 
+from io import BytesIO
+from datetime import datetime
 
-cap  = cv2.VideoCapture(0)
+HF_API_KEY = "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"
 
-if not cap.isOpened():
-    print("Error could not open Webcam")
-    exit()
+API_URL = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
 
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("error to capture image")
-        break
 
-    hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-    lower_skin = np.array([0, 20, 70], dtype=np.uint8)
-    upper_skin = np.array([20, 255, 255], dtype=np.uint8)
+def generate(prompt: str) -> Image.Image:
+    headers = {
+        "Authorization": f"Bearer {HF_API_KEY}",
+        "Accept": "image/png"
+   }
 
-    mask = cv2.inRange(hsv, lower_skin, upper_skin)
-    result = cv2.bitwise_and(frame, frame, mask=mask)
-    contours,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    payload = {
+        "inputs": prompt,
+        "options": {
+            "wait_for_model": True
+        }
+    }
 
-    if contours:
-        max_contour = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(max_contour) > 500:
-            x, y, w, h, = cv2.boundingRect(max_contour)
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+
+    if response.status_code != 200:
+        try:
+            error_data = response.json()
+            raise Exception(error_data.get("error", "Unknown API error"))
+        except ValueError:
+            raise Exception(response.text)
     
-    cv2.imshow('Original Frame', frame)
-
-    if cv2.waitKey(1) & 0xFF ==ord('q'):
-        break 
-
-cap.release()
-cv2.destroyAllWindows()
+    return  Image.open(BytesIO(response.content))
 
 
+def save_image(image: Image.Image) -> str:
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"IMG_{timestamp}.png"
+
+    image.save(file_name)
+    return file_name
+
+
+
+def main():
+    print("Text-To-Image Generator")
+    print("Type 'exit' to quit. \n")
+
+    while True:
+        prompt = input("Enter image discription: \n").strip()
+        if prompt.lower() == "exit":
+            print("Session terminated.")
+            break
+
+        print("\nGenerating image...\n")
+
+        try:
+            image = generate(prompt)
+            image.show()
+
+            saved_file = save_image(image)
+            print(f"Image automatically saved as: {saved_file}\n")
+        except Exception as e:
+            print(f"Operational error: {e}\n")
+if __name__ == "__main__":
+    main()
+    
+
+        
+
+
+        
 
     
-    
-
-    
-
