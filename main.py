@@ -1,58 +1,35 @@
-from transformers import pipeline
-from colorama import Fore, Style, init
-import torch 
+import cv2
+import pytesseract
+import os
+from datetime import datetime
 
-init(autoreset=True)
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-class BartTextSummarizer:
-    def __init__(self):
-        self.device = 0 if torch.cuda.is_available() else - 1
-        self.model_name = "facebook/bart-large-cnn"
+def load_images(image_path):
+    if not os.path.exits(image_path):
+        raise FileNotFoundError("Image path does not exist ")
+    image = cv2.imread(image_path)
+    if image is None
+         raise ValueError("unsupported image format or coruppted image")
+    return image
 
-        self.summarizer = pipeline(
-            "summarization",
-            model=self.model_name,
-            device=self.device
-        )
-    
-    def summarize(self, text):
-        input_length = len(text.split())
+def preprocesses_image(image):
+    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    blur = cv2.GaussianBlur(gray, (5,5), 0)
+    _ , thresh = cv2.threshold(blur, 150, 255, cv2.THRESH_BINARY)
+    return thresh
 
-        max_length = max(30, int(input_length * 0.6))
-        min_length = max(30, int(max_length * 0.5))
+def extract_text(processed_image):
+    config = "--psm 6"
+    text = pytesseract.image_to_string(processed_image, config=config)
+    return text.strip
 
-        summary = self.summarizer(
-            text,
-            min_length=min_length,
-            max_length=max_length,
-            do_sample=False
-        )
-
-        return summary[0]["Summary text"]
-    
+def save_to_text_file(text, directory="output"):
+    os.makedirs(directory,exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_path = os.path.join(directory, f"extracted_text_{timestamp}.txt")
+    with open(file_path, "w", encoding="utf-8") as file:
+        file.write(text)
+    return file_path
 
 def main():
-    print(Fore.CYAN + Style.BRIGHT + "\nLLm Text Summarization System\n")
-
-    user_name = input("Enter your name: ").strip() or "User"
-    print(Fore.GREEN + f"\nWelcome, {user_name}")
-
-    print("\nEnter text to summarize:")
-    text = input("> ").strip()
-
-    if not text:
-        print(Fore.RED + "No input provided. Exiting...")
-        return
-    
-    print(Fore.BLUE + "\nIntilizing BART model...")
-    engine = BartTextSummarizer()
-
-    print(Fore.BLUE + "Performing summarization..\n")
-    summary = engine.summarize(text)
-
-    print(Fore.GREEN + Style.BRIGHT + f"Summary Output for {user_name}:\n")
-    print(summary)
-
-
-if __name__ == "__main__":
-    main()
