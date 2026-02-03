@@ -5,15 +5,15 @@ from datetime import datetime
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
-def load_images(image_path):
-    if not os.path.exits(image_path):
+def load_image(image_path):
+    if not os.path.exists(image_path):
         raise FileNotFoundError("Image path does not exist ")
     image = cv2.imread(image_path)
-    if image is None
+    if image is None:
          raise ValueError("unsupported image format or coruppted image")
     return image
 
-def preprocesses_image(image):
+def processes_image(image):
     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
     blur = cv2.GaussianBlur(gray, (5,5), 0)
     _ , thresh = cv2.threshold(blur, 150, 255, cv2.THRESH_BINARY)
@@ -33,3 +33,30 @@ def save_to_text_file(text, directory="output"):
     return file_path
 
 def main():
+    try:
+        image_path = input("Enter image path: ").strip
+        image = load_image(image_path)
+        processed_image = processes_image(image)
+        text = extract_text(processed_image)
+
+        if not text:
+            print("No readable text detected.")
+            return
+        
+        print("\n-------extracted text-------\n")
+        print(text)
+        print("\n----------------------------\n")
+
+        choice = input("Save this text as a .txt file? (yes/no): ").lower().strip()
+        if choice == "yes":
+            file_path = save_to_text_file(text)
+            print(f"text successfully saved at: {file_path}")
+        else:
+            print("text not saved")
+        
+    
+    except Exception as e:
+        print(f"Process failed: {e}")
+
+if __name__ == "__main__":
+    main()
