@@ -1,74 +1,74 @@
-import requests
-from PIL import Image 
-from io import BytesIO
-from datetime import datetime
+import sys
+import pyaudio
+import numpy as np
+import speech_recognition as sr
 
-HF_API_KEY = "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"
+from speech_recognition import AudioData
+from colorama import init, Fore, Style
 
-API_URL = "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0"
+init(autoreset=True)
 
 
-def generate(prompt: str) -> Image.Image:
-    headers = {
-        "Authorization": f"Bearer {HF_API_KEY}",
-        "Accept": "image/png"
-   }
+def record_audio(seconds, rate=16000):
+    p = pyaudio.PyAudio
 
-    payload = {
-        "inputs": prompt,
-        "options": {
-            "wait_for_model": True
-        }
-    }
+    stream = p.open(
+        format=pyaudio.paInt16,
+        channels=1,
+        rate=rate
+        input=True
+        frames_per_buffer=1024
+    )
+    frames = []
+    for _ in range(int(rate / 1024 * seconds)):
+        frames.append(stream.read(1024, exception_on_overflow=False))
 
-    response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
+        stream.stop_stream()
+        stream.close()
 
-    if response.status_code != 200:
-        try:
-            error_data = response.json()
-            raise Exception(error_data.get("error", "Unknown API error"))
-        except ValueError:
-            raise Exception(response.text)
+        width = p.get_sample_size(pyaudio.paInt16)
+        p.terminate()
+
+
+        return b"".join(frames), rate, width
     
-    return  Image.open(BytesIO(response.content))
+
+def analyze_audio(data, rate):
+    samples = np.frombuffer(data, dtype=np.int16)
+
+    return {
+        "duration": len(samples) / rate,
+        "avg_amplitude": float(np.mean(np.abs(samples))),
+        "max_amplitude": int(np.max(np.abs(samples)))    
+    } 
 
 
-def save_image(image: Image.Image) -> str:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_name = f"IMG_{timestamp}.png"
+def recognize_speech(data, rate, width):
+    recognizer = sr.Recognizer()
 
-    image.save(file_name)
-    return file_name
-
-
-
+    try:
+        return recognizer.recognize_google(
+            AudioData(data, rate, width)
+        )
+    except Exception:
+        return None
+    
 def main():
-    print("Text-To-Image Generator")
-    print("Type 'exit' to quit. \n")
+    print(Fore.CYAN + "=" * 40)
+    print(Fore.CYAN + "================= AUDIO RECOGNIZER =============")
+    print(Fore.CYAN + "=" * 40)
 
     while True:
-        prompt = input("Enter image discription: \n").strip()
-        if prompt.lower() == "exit":
-            print("Session terminated.")
-            break
-
-        print("\nGenerating image...\n")
-
-        try:
-            image = generate(prompt)
-            image.show()
-
-            saved_file = save_image(image)
-            print(f"Image automatically saved as: {saved_file}\n")
-        except Exception as e:
-            print(f"Operational error: {e}\n")
-if __name__ == "__main__":
-    main()
-    
-
+        user_input = input(
+            Fore.YELLOW + 
+            "\nEnter recording duration in seconds (or type 'exit'):"
+        ).strip().lower()
         
+        if user_input == "exit":
+            print(
+                
+            )
 
 
-        
 
-    
+
