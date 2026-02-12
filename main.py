@@ -1,62 +1,93 @@
-import cv2
-import pytesseract
-import os
-from datetime import datetime
+import pyttsx3
+from deep_translator import GoogleTranslator
+from colorama import Fore, init
 
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+init(autoreset=True)
 
-def load_image(image_path):
-    if not os.path.exists(image_path):
-        raise FileNotFoundError("Image path does not exist ")
-    image = cv2.imread(image_path)
-    if image is None:
-         raise ValueError("unsupported image format or coruppted image")
-    return image
+engine = pyttsx3.init()
+engine.setProperty('rate', 150)
 
-def processes_image(image):
-    gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-    blur = cv2.GaussianBlur(gray, (5,5), 0)
-    _ , thresh = cv2.threshold(blur, 150, 255, cv2.THRESH_BINARY)
-    return thresh
 
-def extract_text(processed_image):
-    config = "--psm 6"
-    text = pytesseract.image_to_string(processed_image, config=config)
-    return text.strip
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
 
-def save_to_text_file(text, directory="output"):
-    os.makedirs(directory,exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    file_path = os.path.join(directory, f"extracted_text_{timestamp}.txt")
-    with open(file_path, "w", encoding="utf-8") as file:
-        file.write(text)
-    return file_path
+
+def display_language_options():
+    print(Fore.CYAN + "n\Available Translation Languages")
+    print("1. Hindi (hi)")
+
+    print("2. Tamil (ta)")
+
+    print("3. Telugu (te)")
+
+    print("4. Bengali (bn)")
+
+    print("5. Marathi (mr)")
+
+    print("6. Spanish (es)")
+
+    print("7. Malayalam (ml)")
+
+    print("8. Punjabi (pa)")
+
+    print("0. Exit Program")
+
+    return {
+
+    "1": "hi",
+
+    "2": "ta",
+
+    "3": "te",
+
+    "4": "bn",
+
+    "5": "mr",
+
+    "6": "es",
+
+    "7": "ml",
+
+    "8": "pa"
+
+    }
+
+def select_language():
+    languages = display_language_options()
+    choice = input(Fore.YELLOW + "n\Select target language (1-8): ").strip()
+
+    if choice == "0":
+        return None
+    
+    return languages.get(choice)
+
 
 def main():
-    try:
-        image_path = input("Enter image path: ").strip
-        image = load_image(image_path)
-        processed_image = processes_image(image)
-        text = extract_text(processed_image)
+    print(Fore.GREEN + "\nText Based TTS Translation System Initialized\n")
 
-        if not text:
-            print("No readable text detected.")
+    while True:
+        target_language = select_language()
+
+        if target_language is None:
+            print(Fore.GREEN + "\nSystem shutdown completed.")
+            break
+
+        translator = GoogleTranslator(source='en', target=target_language)
+
+        print(Fore.CYAN + "\nTranslation engine ready. Enter english text below.")
+        print(Fore.YELLOW + "type 'lang' to change language or 'exit' to quit. \n")
+
+        while True:
+            text = input(Fore.YELLOW + ">> ").strip()
+         
+        if text.lower() == "exit":
+            print(Fore.GREEN + "\nSystem shutdown completed.")
             return
         
-        print("\n-------extracted text-------\n")
-        print(text)
-        print("\n----------------------------\n")
-
-        choice = input("Save this text as a .txt file? (yes/no): ").lower().strip()
-        if choice == "yes":
-            file_path = save_to_text_file(text)
-            print(f"text successfully saved at: {file_path}")
-        else:
-            print("text not saved")
         
-    
-    except Exception as e:
-        print(f"Process failed: {e}")
-
-if __name__ == "__main__":
-    main()
+        if text.lower() == "lang":
+            print(Fore.CYAN + "\nSwitching language selection...")
+            return
+        
+        
