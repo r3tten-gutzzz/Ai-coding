@@ -1,52 +1,48 @@
-from groq import generate_response
+from groq import generate_responses
 
-def run_activity():
-    print("ZERO-SHOT, ONE-SHOT & FEW-SHOT LEARNING ACTIVITY")
+def reinforcement_learning_activity():
+    print("\n==== REINFORCEMENT LEARNING ACTIVITY===\n")
+    prompt = input("Enter a prompt for the AI model: ").strip()
+    if not prompt:
+        print("Please enter a prompt to run the activity")
+        return
+    
+    initial_response = generate_responses(prompt, temperature=0.3, max_tokens=1024)
+    print(f"\nInitial AI Response: {initial_response}")
 
-    category = input("Enter a category (e.g,animal, food, city)").strip()
-    item = input(f"Enter a specific {category} to classify: ").strip()
+    try: 
+        rating = int(input("Rate the response from 1 to 5: ").strip())
+        if rating < 1 or rating >5:
+            print("Invalid rating. Using 3")
+            rating = 3
+    except ValueError:
+         print("Invalid rating. Using 3")
+         rating = 3
+
+    feedback = input("Provide feedback for improvement: ").strip()
+    improved_response = f"{initial_response} (Imporved with your feedback: {feedback})"
+    print(f"\nImproved AI response: {improved_response}")
+
+def role_based_prompt_activity():
+    print("\n=== ROLE-BASED PROMPTS ACTIVITY ===\n")
+    category = input("Enter a category: ").strip()
+    item = input(f"Enter a specific {category} topic: ").strip()
 
     if not category or not item:
-        print("Please fill in both fields to run this activity")
-        return 
+        print("Please fill in both fields to run the activity")
+        return
     
-    zero_shot = f"Is {item} a {category}? Answer yes or no"
-    print("\n ----ZERO-SHOT LEARNING -----")
-    print(f"Response: {generate_response(zero_shot, temperature=0.3, max_tokens= 1024)}")
+    teacher_prompt = f"you are a teacher. Explain {item} in simple terms"
+    expert_prompt = f"you are an expert in {category}. Explain {item} in a detailed, technical answer"
 
-    one_shot = f"""Example:
-Category: fruit
-item: apple
-Answer: yes,apple is a fruit.
+    teacher_response = generate_responses(teacher_prompt, temperature=0.3, max_tokens=1024)
+    expert_response = generate_responses(expert_prompt, temperature=0.3,max_tokens=1024)
 
-now you try:
-Category: fruit
-item: apple
-Answer:"""
-    print("\n ----ONE-SHOT LEARNING -----")
-    print(f"Response: {generate_response(one_shot, temperature=0.3, max_tokens=1024)}")
+    print(f"\n----- Teachers Perspective ----\n{teacher_response}")
+    print(f"\n----- Expert's perspective -----\n{expert_response}")
 
-    few_shot = f"""Example 1:
-Category: fruit
-item: apple 
-answer: Yes,apple is a fruit
-
-Now you try:
-Category: {category}
-item: {item}
-Answer:"""
-run_activity()
+reinforcement_learning_activity()
+role_based_prompt_activity()
 
 
-
-
-
-    
-
-
-
-
-
-    
-
-
+        
