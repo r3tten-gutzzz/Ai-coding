@@ -1,72 +1,52 @@
-import speech_recognition as sr
-import pyttsx3
-from deep_translator import GoogleTranslator
-from colorama import Fore, init
-import time
+from groq import generate_response
 
-init(autoreset=True)
+def run_activity():
+    print("ZERO-SHOT, ONE-SHOT & FEW-SHOT LEARNING ACTIVITY")
 
-engine = pyttsx3.init('sapi5')
-engine.setProperty('rate', 150)
-engine.setProperty('volume', 1.0)
+    category = input("Enter a category (e.g,animal, food, city)").strip()
+    item = input(f"Enter a specific {category} to classify: ").strip()
 
-voices = engine.getProperty('voices')
-engine.setProperty('voice', voices[0].id)
-
-recognizer = sr.Recognizer()
-microphone = sr.Microphone()
-
-languages = {
-    "hindi":"hi",
-    "french":"fr",
-    "spanish":"es",
-
-}
-
-def speak(text):
-    engine.say(text)
-    engine.runAndWait()
-    time.sleep(0.4)
-
-def listen():
-    with microphone as source:
-        recognizer.adjust_for_ambient_noise(source, duration=0.6)
-        audio = recognizer.listen(source)
-
-    try:
-        return recognizer.recognize_google(audio).lower()
-    except:
-        return ""
+    if not category or not item:
+        print("Please fill in both fields to run this activity")
+        return 
     
-def select_language():
-    speak("please say your target language. French,hindi,spanish")
-    print(Fore.CYAN + "\nListening for language selection...")
+    zero_shot = f"Is {item} a {category}? Answer yes or no"
+    print("\n ----ZERO-SHOT LEARNING -----")
+    print(f"Response: {generate_response(zero_shot, temperature=0.3, max_tokens= 1024)}")
 
-    spoken_lang = listen()
-    print(Fore.YELLOW + f"Detected: {spoken_lang}")
+    one_shot = f"""Example:
+Category: fruit
+item: apple
+Answer: yes,apple is a fruit.
 
-    return languages.get(spoken_lang)
+now you try:
+Category: fruit
+item: apple
+Answer:"""
+    print("\n ----ONE-SHOT LEARNING -----")
+    print(f"Response: {generate_response(one_shot, temperature=0.3, max_tokens=1024)}")
 
-def main():
-    print(Fore.GREEN + "\nVoice Translation Assistant Activiated\n")
-    speak("Voice Translation Activited")
+    few_shot = f"""Example 1:
+Category: fruit
+item: apple 
+answer: Yes,apple is a fruit
 
-    while True:
-        target_language = select_language()
+Now you try:
+Category: {category}
+item: {item}
+Answer:"""
+run_activity()
 
-
-        if not target_language:
-            speak("Invalid Language detected. please try again")
-            continue 
-
-        translator = GoogleTranslator(source="en", target=target_language)
-        speak("Language selected You may now speak your sentence")
-
-        while 
 
 
 
 
     
 
- 
+
+
+
+
+    
+
+
